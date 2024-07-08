@@ -67,9 +67,10 @@ while True:
         if trade_result is not None:
             print(f"Trade result: {'Win' if trade_result > 0 else 'Loss'}")
             print(f"Profit/Loss: {trade_result}")
-            if trade_result > 0:
-                amount *= 2
-
+            if trade_result < 0:
+                amount *= 2.5
+            else:
+                amount = 10
         else:
             print("Failed to retrieve trade result")
 
