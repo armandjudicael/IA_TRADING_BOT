@@ -3,7 +3,7 @@ import time
 
 # Connect to the IQ Option API
 email = "judicael.ratombotiana@gmail.com"
-password = "Aj!30071999@react"
+password = "Aj!30071999@jv"
 api = IQ_Option(email, password)
 status, reason = api.connect()
 

@@ -1,12 +1,12 @@
 # Import the library
 from iqoptionapi.api import IQOptionAPI
 from iqoptionapi.stable_api import IQ_Option
-#
-# email = "judicael.ratombotiana@gmail.com"
-# password = "Aj!30071999@react"
 
-email = "voahanginirina.noelline@gmail.com"
-password = "Noel!ne1969"
+email = "armandjudicaelratombotiana@gmail.com"
+password = "Aj!30071999@angular"
+
+# email = "voahanginirina.noelline@gmail.com"
+# password = "Noel!ne1969"
 
 print("Connecting...")
 api = IQ_Option(email, password)

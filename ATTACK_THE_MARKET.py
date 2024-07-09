@@ -3,7 +3,7 @@ import time
 
 # Connect to the IQ Option API
 email = "judicael.ratombotiana@gmail.com"
-password = "Aj!30071999Noel!ne1969"
+password = "Aj!30071999@jv"
 api = IQ_Option(email, password)
 status, reason = api.connect()
 
@@ -23,7 +23,7 @@ def moving_average(data, period):
 
 
 # Trade parameters
-asset = "EURJPY"
+asset = "EURUSD"
 duration = 1  # Trade duration in minutes
 amount = 10  # Trade amount
 short_period = 5  # Short-term moving average period
@@ -69,7 +69,7 @@ while True:
             print(f"Profit/Loss: {trade_result}")
             print("Balance:", api.get_balance())
             if trade_result <= 0:
-                amount *= 3
+                amount *= 2
             else:
                 amount = 10
         else:
