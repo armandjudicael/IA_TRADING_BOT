@@ -1,3 +1,5 @@
+import random
+
 from iqoptionapi.stable_api import IQ_Option
 import time
 
@@ -69,9 +71,10 @@ while True:
             print(f"Profit/Loss: {trade_result}")
             print("Balance:", api.get_balance())
             if trade_result <= 0:
-                amount *= 2
+                amount *= 3
+                amount += random.randint(1, 8)
             else:
-                amount = 10
+                amount = 10 + random.randint(1, 10)
         else:
             print("Failed to retrieve trade result")
 

@@ -1,3 +1,5 @@
+import random
+
 from iqoptionapi.stable_api import IQ_Option
 import time
 
@@ -22,7 +24,7 @@ def simple_moving_average(data, period):
 
 # Trade parameters
 asset = "EURJPY"
-duration = 1  # 1 minute candlesticks
+duration = 2  # 1 minute candlesticks
 amount = 10  # Trade amount
 
 # Real-time trading loop
@@ -30,10 +32,10 @@ while True:
     try:
         # Fetch historical data (candlesticks)
         end_time = time.time()  # Current time
-        size = 500  # Number of candlesticks needed for SMA calculation
+        size = 1000  # Number of candlesticks needed for SMA calculation
         candles = api.get_candles(asset, duration, size, end_time)
 
-        if len(candles) < 200:
+        if len(candles) < 1000:
             print("Not enough data. Waiting for more candlesticks...")
             time.sleep(10)
             continue
@@ -72,8 +74,9 @@ while True:
             print(f"Profit/Loss: {trade_result}")
             if trade_result <= 0:
                 amount *= 3
+                amount+=random.randint(1, 8)
             else:
-                amount = 10
+                amount = 10 + random.randint(1, 5)
         else:
             print("Failed to retrieve trade result")
 

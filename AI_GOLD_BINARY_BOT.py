@@ -1,7 +1,6 @@
 from iqoptionapi.stable_api import IQ_Option
 import time
 
-
 # Your IQ Option credentials
 email = "armandjudicaelratombotiana@gmail.com"
 password = "Aj!30071999@angular"
@@ -31,9 +30,8 @@ def get_candles_retry(asset, duration, size, retry_attempts=3):
     return None
 
 
-# Function to get historical closing prices of gold
-def get_gold_prices(duration, size):
-    asset = "GBPUSD"  # Gold symbol on IQ Option
+# Function to get historical closing prices
+def get_prices(asset, duration, size):
     candles = get_candles_retry(asset, duration, size)
 
     if candles is not None:
@@ -57,19 +55,25 @@ def execute_trade(asset, amount, direction, duration, retry_attempts=3):
             if status:
                 print(f"Trade executed successfully: {direction} on {asset}")
                 return trade_id
+            else:
+                print(f"Trade execution failed with status: {status}. Retrying...")
+                time.sleep(5)  # Wait before retrying
         except Exception as e:
             print(f"Error executing trade: {e}")
-            print("Attempting to retry...")
+            print("Attempting to reconnect...")
             api.connect()
             time.sleep(5)  # Wait before retrying
     return None
+
+
 # Function to monitor trade result and manage money/risk
 def monitor_trade(trade_id, amount, initial_balance, risk_percentage):
-    time.sleep(60)  # Wait 1 minute for the trade to expire
+    # Wait for the trade to expire
+    time.sleep(duration * 60)
 
-    status, trade_result = api.check_win_v3(trade_id)
+    trade_result = api.check_win_v3(trade_id)
 
-    if status and trade_result is not None:
+    if trade_result is not None:
         result = 'Win' if trade_result > 0 else 'Loss'
         print(f"Trade result: {result}")
         print(f"Profit/Loss: {trade_result}")
@@ -99,7 +103,18 @@ def monitor_trade(trade_id, amount, initial_balance, risk_percentage):
         return amount
 
 
+# Function to list available binary option assets
+def list_binary_option_assets():
+    binary_option_assets = api.get_binary_option_detail()
+    if binary_option_assets:
+        return binary_option_assets
+    else:
+        print("No binary option assets available.")
+        return None
+
+
 # Set initial trading parameters
+initial_asset = "EURUSD"  # Initial asset to trade
 duration = 1  # 1 minute timeframe for short-term trading
 amount = 10  # Example trade amount
 initial_balance = api.get_balance()  # Get initial account balance
@@ -108,8 +123,8 @@ risk_percentage = 2  # Risk 2% of account balance per trade
 # Execute trades in an infinite loop (example)
 while True:
     try:
-        # Get recent closing prices of gold
-        close_prices = get_gold_prices(duration, 50)  # Example long-term MA period
+        # Get recent closing prices of the current asset
+        close_prices = get_prices(initial_asset, duration, 20)  # Example long-term MA period
         if close_prices is None:
             continue
 
@@ -123,14 +138,25 @@ while True:
         else:
             direction = "put"  # Buy put option if short-term MA crosses below long-term MA
 
-        # Execute trade based on direction
-        trade_id = execute_trade("XAUUSD", amount, direction, duration)
+        # Execute trade based on direction and initial asset
+        trade_id = execute_trade(initial_asset, amount, direction, duration)
+        print(trade_id)
 
         # Monitor trade result and adjust trade size
         if trade_id:
             amount = monitor_trade(trade_id, amount, initial_balance, risk_percentage)
         else:
-            print("Skipping to next trade due to execution failure")
+            print("Attempting to trade with another asset...")
+            # List available assets
+            binary_option_assets = list_binary_option_assets()
+
+            if binary_option_assets:
+                # Choose another asset from the list
+                for asset in binary_option_assets:
+                    if asset != initial_asset:
+                        initial_asset = asset
+                        print(f"Switching to trade with {initial_asset}")
+                        break
 
         # Wait before the next trade
         time.sleep(60)  # Wait 1 minute before the next trade
@@ -141,6 +167,3 @@ while True:
     except Exception as e:
         print(f"Error in trading loop: {e}")
         continue
-
-# Close API connection (not reached in an infinite loop)
-api.close()
