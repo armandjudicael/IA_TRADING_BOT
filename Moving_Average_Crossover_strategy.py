@@ -64,6 +64,8 @@ while True:
         # Wait for the trade to expire
         time.sleep(duration * 60)
 
+
+
         # Check the trade result
         trade_result = api.check_win_v3(trade_id)
 
