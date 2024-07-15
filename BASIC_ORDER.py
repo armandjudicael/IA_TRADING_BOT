@@ -1,7 +1,6 @@
 from time import time, sleep, gmtime
 from iqoptionapi.stable_api import IQ_Option
 
-
 def is_otc():
     current_time = gmtime()
     current_hour = current_time.tm_hour

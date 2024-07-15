@@ -1,12 +1,21 @@
-import logging
 import random
-
+import datetime
 from iqoptionapi.stable_api import IQ_Option
 import time
+import openpyxl
+from openpyxl import Workbook
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Create a new workbook and select the active sheet
+workbook = Workbook()
+sheet = workbook.active
+sheet.title = 'Trade Monitoring'
+
+# Headers for the table
+headers = ['Trade ID', 'Timestamp', 'Strategy', 'Status', 'Amount', 'Trade Result', 'Balance']
+
+# Write headers to the first row
+sheet.append(headers)
 
 # Connect to the IQ Option API
 email = "judicael.ratombotiana@gmail.com"
@@ -32,16 +41,20 @@ def moving_average(data, period):
 # Trade parameters
 asset = "EURUSD"
 duration = 1  # Trade duration in minutes
-amount = 2  # Trade amount
+global_amount = 1
+amount = global_amount  # Trade amount
+martingale = 2
 short_period = 5  # Short-term moving average period
 long_period = 20  # Long-term moving average period
+
 
 # Real-time trading loop
 while True:
     try:
+
         # Fetch the latest candlestick data
         end_time = time.time()  # Current time
-        size = max(short_period,long_period)  # Number of candlesticks needed
+        size = max(short_period, long_period)  # Number of candlesticks needed
         candles = api.get_candles(asset, duration, size, end_time)
 
         # Extract closing prices
@@ -65,6 +78,11 @@ while True:
         else:
             print(f"Trade execution failed: {reason}")
 
+        # Simulated data for other columns
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Current timestamp
+        strategy = 'Example Strategy'  # Example strategy name
+        status = 'Closed'  # Example status
+
         # Wait for the trade to expire
         time.sleep(duration * 60)
 
@@ -76,13 +94,24 @@ while True:
             print(f"Profit/Loss: {trade_result}")
             print("Balance:", api.get_balance())
             if trade_result <= 0:
-                amount *= 2
-                amount += random.randint(1, 5)
+                amount *= martingale
             else:
-                amount = 2 + random.randint(1, 10)
+                amount = global_amount
         else:
             print("Failed to retrieve trade result")
+
+            # Write data to Excel
+            sheet.append([trade_id, timestamp, strategy, status, amount, trade_result, api.get_balance()])
+
+        # Wait before the next iteration
+        time.sleep(10)  # Wait 10 seconds before fetching new data and trading again
 
     except Exception as e:
         print(f"An error occurred: {e}")
         time.sleep(10)  # Wait before retrying in case of an error
+
+# Save workbook to Excel file
+excel_file = 'trade_monitoring.xlsx'
+workbook.save(filename=excel_file)
+
+
