@@ -1,7 +1,12 @@
+import logging
 import random
 
 from iqoptionapi.stable_api import IQ_Option
 import time
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 # Connect to the IQ Option API
 email = "judicael.ratombotiana@gmail.com"
@@ -27,7 +32,7 @@ def moving_average(data, period):
 # Trade parameters
 asset = "EURUSD"
 duration = 1  # Trade duration in minutes
-amount = 10  # Trade amount
+amount = 2  # Trade amount
 short_period = 5  # Short-term moving average period
 long_period = 20  # Long-term moving average period
 
@@ -36,7 +41,7 @@ while True:
     try:
         # Fetch the latest candlestick data
         end_time = time.time()  # Current time
-        size = max(short_period, long_period)  # Number of candlesticks needed
+        size = max(short_period,long_period)  # Number of candlesticks needed
         candles = api.get_candles(asset, duration, size, end_time)
 
         # Extract closing prices
@@ -71,15 +76,12 @@ while True:
             print(f"Profit/Loss: {trade_result}")
             print("Balance:", api.get_balance())
             if trade_result <= 0:
-                amount *= 3
-                amount += random.randint(1, 8)
+                amount *= 2
+                amount += random.randint(1, 5)
             else:
-                amount = 10 + random.randint(1, 10)
+                amount = 2 + random.randint(1, 10)
         else:
             print("Failed to retrieve trade result")
-
-        # Wait before the next iteration
-        time.sleep(10)  # Wait 10 seconds before fetching new data and trading again
 
     except Exception as e:
         print(f"An error occurred: {e}")

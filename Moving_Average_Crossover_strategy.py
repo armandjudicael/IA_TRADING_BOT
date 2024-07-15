@@ -24,7 +24,7 @@ def simple_moving_average(data, period):
 
 # Trade parameters
 asset = "EURJPY"
-duration = 2  # 1 minute candlesticks
+duration = 1  # 1 minute candlesticks
 amount = 10  # Trade amount
 
 # Real-time trading loop
@@ -32,10 +32,10 @@ while True:
     try:
         # Fetch historical data (candlesticks)
         end_time = time.time()  # Current time
-        size = 1000  # Number of candlesticks needed for SMA calculation
+        size = 600  # Number of candlesticks needed for SMA calculation
         candles = api.get_candles(asset, duration, size, end_time)
 
-        if len(candles) < 1000:
+        if len(candles) < 200:
             print("Not enough data. Waiting for more candlesticks...")
             time.sleep(10)
             continue
