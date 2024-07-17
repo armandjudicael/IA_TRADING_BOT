@@ -30,7 +30,7 @@ while True:
     try:
         # Fetch historical data (candlesticks)
         end_time = time.time()  # Current time
-        size = 500  # Number of candlesticks needed for SMA calculation
+        size = 200  # Number of candlesticks needed for SMA calculation
         candles = api.get_candles(asset, duration, size, end_time)
 
         if len(candles) < 200:
@@ -63,8 +63,6 @@ while True:
 
         # Wait for the trade to expire
         time.sleep(duration * 60)
-
-
 
         # Check the trade result
         trade_result = api.check_win_v3(trade_id)

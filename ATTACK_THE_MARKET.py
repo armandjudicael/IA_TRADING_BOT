@@ -4,7 +4,8 @@ import time
 import openpyxl
 from openpyxl import Workbook
 import numpy as np
-import talib as ta
+import ta
+
 
 # Create a new workbook and select the active sheet
 workbook = Workbook()
@@ -30,9 +31,9 @@ if reason == "2FA":
     code_sms = input("Enter the received code: ")
     status, reason = api.connect_2fa(code_sms)
 
-# Define the moving average function
+# Define the moving average function (for trend direction)
 def moving_average(data, period):
-    return sum(data[-period:]) / period
+    return np.mean(data[-period:])
 
 # Define Fibonacci retracement levels function
 def calculate_fibonacci_levels(high, low):
@@ -45,64 +46,76 @@ duration = 1  # Trade duration in minutes
 global_amount = 1
 amount = global_amount  # Initial trade amount
 martingale = 2
-short_period = 5  # Short-term moving average period
-long_period = 20  # Long-term moving average period
 
 # Real-time trading loop
 while True:
     try:
         # Fetch the latest candlestick data
         end_time = time.time()  # Current time
-        size = max(short_period, long_period)  # Number of candlesticks needed
+        size = 20  # Number of candlesticks needed
         candles = api.get_candles(asset, duration, size, end_time)
-        close_prices = [candle['close'] for candle in candles]
+        close_prices = np.array([candle['close'] for candle in candles])
 
         # Calculate moving averages
-        short_ma = moving_average(close_prices, short_period)
-        long_ma = moving_average(close_prices, long_period)
+        short_ma = moving_average(close_prices, 5)
+        long_ma = moving_average(close_prices, 20)
 
-        # Determine trade direction
+        # Determine trade direction based on moving averages
         if short_ma > long_ma:
-            direction = "call"  # Buy
+            trend_direction = "uptrend"
         else:
-            direction = "put"  # Sell
+            trend_direction = "downtrend"
+
+        # Calculate Fibonacci retracement levels based on recent high and low
+        high = np.max(close_prices)
+        low = np.min(close_prices)
+        fib_levels = calculate_fibonacci_levels(high, low)
+
+        # Determine trade direction based on Fibonacci levels and trend
+        if trend_direction == "uptrend" and close_prices[-1] >= fib_levels[0]:
+            direction = "call"  # Buy option (upward trend continuation)
+        elif trend_direction == "downtrend" and close_prices[-1] <= fib_levels[0]:
+            direction = "put"  # Sell option (downward trend continuation)
+        else:
+            direction = None  # No trade
 
         # Execute the trade
-        status, trade_id = api.buy(amount, asset, direction, duration)
+        if direction:
+            status, trade_id = api.buy(amount, asset, direction, duration)
 
-        if status:
-            print(f"Trade executed successfully: {direction} on {asset}")
-        else:
-            print(f"Trade execution failed: {reason}")
-
-        # Simulated data for other columns
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        strategy = 'Moving Average Crossover'
-        status = 'Closed'
-
-        # Wait for the trade to expire
-        time.sleep(duration * 60)
-
-        # Check the trade result
-        trade_result = api.check_win_v3(trade_id)
-
-        if trade_result is not None:
-            print(f"Trade result: {'Win' if trade_result > 0 else 'Loss'}")
-            print(f"Profit/Loss: {trade_result}")
-            print("Balance:", api.get_balance())
-            if trade_result <= 0:
-                amount *= martingale  # Apply Martingale strategy on loss
+            if status:
+                print(f"Trade executed successfully: {direction} on {asset}")
             else:
-                amount = global_amount  # Reset amount on win
-        else:
-            print("Failed to retrieve trade result")
+                print(f"Trade execution failed: {reason}")
 
-        # Write data to Excel
-        sheet.append([trade_id, timestamp, strategy, status, amount, trade_result, api.get_balance()])
+            # Simulated data for other columns
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            strategy = 'Moving Average + Fibonacci Retracement'
+            status = 'Closed'
 
-        # Save workbook periodically to avoid data loss
-        if len(sheet['A']) % 2 == 0:  # Save every 10 trades
-            workbook.save('trade_monitoring.xlsx')
+            # Wait for the trade to expire
+            time.sleep(duration * 60)
+
+            # Check the trade result
+            trade_result = api.check_win_v3(trade_id)
+
+            if trade_result is not None:
+                print(f"Trade result: {'Win' if trade_result > 0 else 'Loss'}")
+                print(f"Profit/Loss: {trade_result}")
+                print("Balance:", api.get_balance())
+                if trade_result <= 0:
+                    amount *= martingale  # Apply Martingale strategy on loss
+                else:
+                    amount = global_amount  # Reset amount on win
+            else:
+                print("Failed to retrieve trade result")
+
+            # Write data to Excel
+            sheet.append([trade_id, timestamp, strategy, status, amount, {'Win' if trade_result > 0 else 'Loss'}, api.get_balance()])
+
+            # Save workbook periodically to avoid data loss
+            if len(sheet['A']) % 10 == 0:  # Save every 10 trades
+                workbook.save('trade_monitoring.xlsx')
 
         # Wait before the next iteration
         time.sleep(10)  # Wait 10 seconds before fetching new data and trading again

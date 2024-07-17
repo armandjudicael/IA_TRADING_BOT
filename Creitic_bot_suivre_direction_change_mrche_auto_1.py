@@ -123,8 +123,8 @@ class TradingBot:
         print(
             ".................................................................................................................................\n")
 
-        self.email = input("Email: ")
-        self.password = input("Mot de passe: ")
+        self.email = "judicael.ratombotiana@gmail.com"
+        self.password = "Aj!30071999@jv"
         self.account_type = input("Type de compte (demo/real): ").strip().lower()
         self.available_pairs = {}
         self.solde_initial = 0.00
