@@ -1,5 +1,0 @@
-2024-07-18 09:56:00,317 - ERROR - An error occurred: can only concatenate str (not "float") to str
-2024-07-18 09:57:00,279 - ERROR - An error occurred: can only concatenate str (not "float") to str
-2024-07-18 09:58:00,516 - ERROR - An error occurred: can only concatenate str (not "float") to str
-2024-07-18 09:59:00,308 - ERROR - An error occurred: can only concatenate str (not "float") to str
-2024-07-18 10:00:01,356 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145542879 and Amount 1.0

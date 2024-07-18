@@ -1,0 +1,138 @@
+2024-07-18 11:51:01,506 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145715200 and Amount 1.0
+2024-07-18 11:52:01,801 - INFO - Trade result: Loss for Trade ID 19145715200. Profit/Loss: -1. New Balance: 14.200000000000728
+2024-07-18 11:52:02,661 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 11:53:01,348 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145718182 and Amount 2.0
+2024-07-18 11:54:01,624 - INFO - Trade result: Loss for Trade ID 19145718182. Profit/Loss: -2. New Balance: 16.200000000000728
+2024-07-18 11:54:02,558 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 11:55:01,441 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145721095 and Amount 4.0
+2024-07-18 11:56:01,794 - INFO - Trade result: Win for Trade ID 19145721095. Profit/Loss: 1.2000000000000002. New Balance: 15.0
+2024-07-18 11:56:02,467 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 11:57:01,219 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145724061 and Amount 1.0
+2024-07-18 11:58:01,488 - INFO - Trade result: Loss for Trade ID 19145724061. Profit/Loss: -1. New Balance: 16.0
+2024-07-18 11:58:02,267 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 11:59:01,201 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145726935 and Amount 2.0
+2024-07-18 12:00:01,468 - INFO - Trade result: Loss for Trade ID 19145726935. Profit/Loss: -2. New Balance: 18.0
+2024-07-18 12:00:02,191 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 12:01:01,352 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145729935 and Amount 4.0
+2024-07-18 12:02:01,604 - INFO - Trade result: Win for Trade ID 19145729935. Profit/Loss: 1.2000000000000002. New Balance: 16.799999999999272
+2024-07-18 12:02:02,138 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 12:03:01,238 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145732817 and Amount 1.0
+2024-07-18 12:04:01,476 - INFO - Trade result: Loss for Trade ID 19145732817. Profit/Loss: -1. New Balance: 17.799999999999272
+2024-07-18 12:04:02,223 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 12:05:01,345 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145735277 and Amount 2.0
+2024-07-18 12:06:01,643 - INFO - Trade result: Loss for Trade ID 19145735277. Profit/Loss: -2. New Balance: 19.799999999999272
+2024-07-18 12:06:02,781 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 12:07:01,343 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145737852 and Amount 4.0
+2024-07-18 12:08:01,597 - INFO - Trade result: Win for Trade ID 19145737852. Profit/Loss: 1.2000000000000002. New Balance: 18.600000000000364
+2024-07-18 12:08:02,135 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 12:09:01,341 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145740177 and Amount 1.0
+2024-07-18 12:10:01,799 - INFO - Trade result: Loss for Trade ID 19145740177. Profit/Loss: -1. New Balance: 19.600000000000364
+2024-07-18 12:10:03,411 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 12:11:01,279 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145743334 and Amount 2.0
+2024-07-18 12:12:01,532 - INFO - Trade result: Loss for Trade ID 19145743334. Profit/Loss: -2. New Balance: 21.600000000000364
+2024-07-18 12:12:02,369 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 12:13:01,204 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145745980 and Amount 4.0
+2024-07-18 12:14:01,558 - INFO - Trade result: Win for Trade ID 19145745980. Profit/Loss: 1.2000000000000002. New Balance: 20.399999999999636
+2024-07-18 12:14:02,011 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 12:15:01,313 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145748578 and Amount 1.0
+2024-07-18 12:16:01,568 - INFO - Trade result: Loss for Trade ID 19145748578. Profit/Loss: -1. New Balance: 21.399999999999636
+2024-07-18 12:16:02,270 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 12:17:01,272 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145751783 and Amount 2.0
+2024-07-18 12:18:01,539 - INFO - Trade result: Loss for Trade ID 19145751783. Profit/Loss: -2. New Balance: 23.399999999999636
+2024-07-18 12:18:02,332 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 12:19:01,268 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145754821 and Amount 4.0
+2024-07-18 12:20:01,493 - INFO - Trade result: Loss for Trade ID 19145754821. Profit/Loss: -4. New Balance: 27.399999999999636
+2024-07-18 12:20:02,537 - INFO - Martingale applied. New amount for the next trade: 8.0
+2024-07-18 12:21:01,296 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145757948 and Amount 8.0
+2024-07-18 12:22:01,666 - INFO - Trade result: Loss for Trade ID 19145757948. Profit/Loss: -8. New Balance: 35.399999999999636
+2024-07-18 12:22:02,395 - INFO - Martingale applied. New amount for the next trade: 16.0
+2024-07-18 12:23:01,326 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145760990 and Amount 16.0
+2024-07-18 12:24:01,563 - INFO - Trade result: Win for Trade ID 19145760990. Profit/Loss: 4.800000000000001. New Balance: 30.600000000000364
+2024-07-18 12:24:02,073 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 12:25:01,203 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145764001 and Amount 1.0
+2024-07-18 12:26:01,423 - INFO - Trade result: Loss for Trade ID 19145764001. Profit/Loss: -1. New Balance: 31.600000000000364
+2024-07-18 12:26:02,201 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 12:27:01,375 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145767771 and Amount 2.0
+2024-07-18 12:28:01,595 - INFO - Trade result: Loss for Trade ID 19145767771. Profit/Loss: -2. New Balance: 33.600000000000364
+2024-07-18 12:28:02,467 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 12:29:01,281 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145770847 and Amount 4.0
+2024-07-18 12:30:01,523 - INFO - Trade result: Loss for Trade ID 19145770847. Profit/Loss: -4. New Balance: 37.600000000000364
+2024-07-18 12:30:02,276 - INFO - Martingale applied. New amount for the next trade: 8.0
+2024-07-18 12:31:01,305 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145774622 and Amount 8.0
+2024-07-18 12:32:01,542 - INFO - Trade result: Loss for Trade ID 19145774622. Profit/Loss: -8. New Balance: 45.600000000000364
+2024-07-18 12:32:02,294 - INFO - Martingale applied. New amount for the next trade: 16.0
+2024-07-18 12:33:01,202 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145778237 and Amount 16.0
+2024-07-18 12:34:01,451 - INFO - Trade result: Loss for Trade ID 19145778237. Profit/Loss: -16. New Balance: 61.600000000000364
+2024-07-18 12:34:02,285 - INFO - Martingale applied. New amount for the next trade: 1.0
+2024-07-18 12:35:01,260 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145781869 and Amount 1.0
+2024-07-18 12:36:01,525 - INFO - Trade result: Loss for Trade ID 19145781869. Profit/Loss: -1. New Balance: 62.600000000000364
+2024-07-18 12:36:02,281 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 12:37:01,269 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145785469 and Amount 2.0
+2024-07-18 12:38:01,500 - INFO - Trade result: Loss for Trade ID 19145785469. Profit/Loss: -2. New Balance: 64.60000000000036
+2024-07-18 12:38:02,246 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 12:39:01,184 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145788989 and Amount 4.0
+2024-07-18 12:40:01,430 - INFO - Trade result: Win for Trade ID 19145788989. Profit/Loss: 1.2000000000000002. New Balance: 63.399999999999636
+2024-07-18 12:40:01,883 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 12:41:01,303 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145792844 and Amount 1.0
+2024-07-18 12:42:01,544 - INFO - Trade result: Win for Trade ID 19145792844. Profit/Loss: 0.30000000000000004. New Balance: 63.100000000000364
+2024-07-18 12:42:02,030 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 12:43:01,347 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145796096 and Amount 1.0
+2024-07-18 12:44:01,591 - INFO - Trade result: Loss for Trade ID 19145796096. Profit/Loss: -1. New Balance: 64.10000000000036
+2024-07-18 12:44:02,308 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 12:45:01,359 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145799583 and Amount 2.0
+2024-07-18 12:46:01,361 - WARNING - Failed to retrieve trade result, retrying...
+2024-07-18 12:46:03,363 - WARNING - Failed to retrieve trade result, retrying...
+2024-07-18 12:46:05,365 - WARNING - Failed to retrieve trade result, retrying...
+2024-07-18 12:46:07,366 - ERROR - Max retries exceeded, unable to retrieve trade result
+2024-07-18 12:46:07,366 - ERROR - Failed to retrieve trade result
+2024-07-18 12:46:12,272 - ERROR - Connection is already closed.
+2024-07-18 12:47:00,001 - ERROR - **error** get_candles need reconnect
+2024-07-18 12:47:03,232 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145803700 and Amount 2.0
+2024-07-18 12:48:03,449 - INFO - Trade result: Loss for Trade ID 19145803700. Profit/Loss: -2. New Balance: 68.10000000000036
+2024-07-18 12:48:04,200 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 12:49:01,272 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145807297 and Amount 4.0
+2024-07-18 12:50:01,529 - INFO - Trade result: Loss for Trade ID 19145807297. Profit/Loss: -4. New Balance: 72.10000000000036
+2024-07-18 12:50:02,395 - INFO - Martingale applied. New amount for the next trade: 8.0
+2024-07-18 12:51:01,523 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145810707 and Amount 8.0
+2024-07-18 12:52:01,762 - INFO - Trade result: Win for Trade ID 19145810707. Profit/Loss: 2.4000000000000004. New Balance: 69.70000000000073
+2024-07-18 12:52:02,280 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 12:53:01,241 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145814496 and Amount 1.0
+2024-07-18 12:54:01,486 - INFO - Trade result: Win for Trade ID 19145814496. Profit/Loss: 0.30000000000000004. New Balance: 69.39999999999964
+2024-07-18 12:54:01,974 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 12:55:01,206 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145817500 and Amount 1.0
+2024-07-18 12:56:01,428 - INFO - Trade result: Loss for Trade ID 19145817500. Profit/Loss: -1. New Balance: 70.39999999999964
+2024-07-18 12:56:02,254 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 12:57:01,299 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145820989 and Amount 2.0
+2024-07-18 12:58:01,577 - INFO - Trade result: Win for Trade ID 19145820989. Profit/Loss: 0.6000000000000001. New Balance: 69.79999999999927
+2024-07-18 12:58:02,190 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 12:59:01,294 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145823990 and Amount 1.0
+2024-07-18 13:00:02,100 - INFO - Trade result: Loss for Trade ID 19145823990. Profit/Loss: -1. New Balance: 70.79999999999927
+2024-07-18 13:00:02,841 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 13:01:01,223 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145827805 and Amount 2.0
+2024-07-18 13:02:01,488 - INFO - Trade result: Loss for Trade ID 19145827805. Profit/Loss: -2. New Balance: 72.79999999999927
+2024-07-18 13:02:02,237 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 13:03:01,220 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145831254 and Amount 4.0
+2024-07-18 13:04:01,475 - INFO - Trade result: Win for Trade ID 19145831254. Profit/Loss: 1.2000000000000002. New Balance: 71.60000000000036
+2024-07-18 13:04:01,992 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 13:05:01,352 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145834826 and Amount 1.0
+2024-07-18 13:06:01,646 - INFO - Trade result: Win for Trade ID 19145834826. Profit/Loss: 0.30000000000000004. New Balance: 71.29999999999927
+2024-07-18 13:06:02,222 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 13:07:01,227 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145838375 and Amount 1.0
+2024-07-18 13:08:01,458 - INFO - Trade result: Win for Trade ID 19145838375. Profit/Loss: 0.30000000000000004. New Balance: 71.0
+2024-07-18 13:08:01,962 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 13:09:01,291 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19145842311 and Amount 1.0
+2024-07-18 13:10:01,555 - INFO - Trade result: Win for Trade ID 19145842311. Profit/Loss: 0.30000000000000004. New Balance: 70.70000000000073
+2024-07-18 13:10:02,142 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 13:11:01,346 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145845715 and Amount 1.0
+2024-07-18 13:12:01,577 - INFO - Trade result: Win for Trade ID 19145845715. Profit/Loss: 0.30000000000000004. New Balance: 70.39999999999964
+2024-07-18 13:12:02,049 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 13:13:01,274 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145849818 and Amount 1.0
+2024-07-18 13:14:01,581 - INFO - Trade result: Win for Trade ID 19145849818. Profit/Loss: 0.30000000000000004. New Balance: 70.10000000000036
+2024-07-18 13:14:02,167 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-18 13:15:01,575 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145853294 and Amount 1.0
+2024-07-18 13:16:01,852 - INFO - Trade result: Loss for Trade ID 19145853294. Profit/Loss: -1. New Balance: 71.10000000000036
+2024-07-18 13:16:02,607 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-18 13:17:01,269 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145857008 and Amount 2.0
+2024-07-18 13:18:01,513 - INFO - Trade result: Loss for Trade ID 19145857008. Profit/Loss: -2. New Balance: 73.10000000000036
+2024-07-18 13:18:02,273 - INFO - Martingale applied. New amount for the next trade: 4.0
+2024-07-18 13:19:01,263 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19145859743 and Amount 4.0

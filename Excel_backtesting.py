@@ -6,6 +6,7 @@ import time
 import datetime
 import threading
 from colorama import init, Fore, Style
+from numpy import random
 
 # Initialize colorama
 init(autoreset=True)
@@ -20,15 +21,16 @@ class TradingBot:
         self.solde_initial = 0.00
 
         # Initialize the Excel writer
-        self.excel_file = '../backtest_results.xlsx'
-        self.create_excel_writer()
+        random_number = random.randint(1000, 9999)
+        self.excel_file = f'backtest_results_{random_number}.xlsx'
+        self.create_excel_writer(['Timestamp', 'Pair', 'Action', 'Stake', 'Martingale', 'Result', 'Profit', 'Total Profit'])
 
         self.connect_api()
         self.fetch_pairs()
         self.select_pair_and_stake()
         self.reset_trade_variables()
 
-    def create_excel_writer(self):
+    def create_excel_writer(self,columns):
         """Create a new Excel file or open an existing one for logging backtesting results."""
         if os.path.exists(self.excel_file):
             os.remove(self.excel_file)  # Remove the corrupted file to avoid BadZipFile error
@@ -40,7 +42,7 @@ class TradingBot:
 
         # Initialize results DataFrame
         self.results_df = pd.DataFrame(
-            columns=['Timestamp', 'Pair', 'Action', 'Stake', 'Martingale', 'Result', 'Profit', 'Total Profit'])
+            columns=columns)
         self.results_df.to_excel(self.writer, sheet_name='Results', index=False)
         self.writer._save()  # Save the file initially
 
