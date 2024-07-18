@@ -54,7 +54,7 @@ while True:
             direction = "put"  # Sell signal (short-term SMA crosses below long-term SMA)
 
         # Execute the trade
-        status, trade_id = api.buy(amount, asset, direction, duration)
+        status, trade_id = api.buy_digital_spot(amount, asset, direction, duration)
 
         if status:
             print(f"Trade executed successfully: {direction} on {asset}, Amount : {amount} , Trade ID : {trade_id}")
