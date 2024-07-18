@@ -298,3 +298,5 @@
 2024-07-18 14:54:01,732 - INFO - Trade result: Win for Trade ID 19146050311. Profit/Loss: 1.2000000000000002. New Balance: 223.39999999999964
 2024-07-18 14:54:02,888 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
 2024-07-18 14:55:01,541 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19146054610 and Amount 1.0
+2024-07-18 23:19:16,144 - ERROR - error from callback <bound method WebsocketClient.on_message of <iqoptionapi.ws.client.WebsocketClient object at 0x000001C08C4E7EF0>>: 'isSuccessful'
+2024-07-18 23:21:36,760 - ERROR - Connection is already closed.

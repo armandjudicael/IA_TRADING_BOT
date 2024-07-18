@@ -18,9 +18,13 @@ class TradingBot:
         try:
             self.email = self.config['IQOption']['email']
             self.password = self.config['IQOption']['password']
+            self.account_type = self.config['IQOption']['accountType']
             self.global_amount = float(self.config['Trading']['amount'])
             self.martingale = float(self.config['Trading']['martingale'])
-            self.demo_balance = float(self.config['Trading']['demo_initial_balance'])
+
+            if self.account_type =='PRACTICE' :
+               self.demo_balance = float(self.config['Trading']['demo_initial_balance'])
+
             self.short_period = int(self.config['Trading']['short_period'])
             self.long_period = int(self.config['Trading']['long_period'])
             self.asset = self.config['Trading']['asset']
@@ -32,30 +36,51 @@ class TradingBot:
             self.notification_email = self.config['Email']['notification_email']
         except KeyError as e:
             raise KeyError(f"Missing key in config.ini: {e}")
-
     def load_config(self):
         # Load configuration from a file
         config = configparser.ConfigParser()
         config.read('config.ini')
+
+        mode = config['Environment']['mode']
+
+        # Construct the filename based on mode
+        config_filename = f'config-{mode.lower()}.ini'
+
+        # Read configuration from the constructed filename
+        config.read(config_filename)
+
         return config
 
+    import logging
+
     def connect_api(self):
-        # Connect to the IQ Option API
-        self.api = IQ_Option(self.email, self.password)
-        status, reason = self.api.connect()
+        try:
+            # Connect to the IQ Option API
+            self.api = IQ_Option(self.email, self.password)
+            status, reason = self.api.connect()
 
-        if not status:
-            logging.error(f'Failed to connect: {reason}')
-            print('Failed to connect:', reason)
-            exit()
-
-        if reason == "2FA":
-            code_sms = input("Enter the received code: ")
-            status, reason = self.api.connect_2fa(code_sms)
             if not status:
-                logging.error(f'Failed to connect with 2FA: {reason}')
-                print('Failed to connect with 2FA:', reason)
-                exit()
+                logging.error(f'Failed to connect: {reason}')
+                return False
+
+            if self.account_type == 'PRACTICE':
+                reset_status = self.api.reset_practice_balance()
+                if not reset_status:
+                    logging.error('Failed to reset practice balance')
+                    return False
+
+            if reason == "2FA":
+                code_sms = input("Enter the received code: ")
+                status, reason = self.api.connect_2fa(code_sms)
+                if not status:
+                    logging.error(f'Failed to connect with 2FA: {reason}')
+                    return False
+
+            return True
+
+        except Exception as e:
+            logging.exception(f'Exception occurred while connecting: {e}')
+            return False
 
     def create_excel_writer(self, columns):
         """Create a new Excel file or open an existing one for logging backtesting results."""
@@ -72,7 +97,6 @@ class TradingBot:
         self.results_df.to_excel(self.writer, sheet_name='Results', index=False)
         self.writer._save()  # Save the file initially
 
-
     def send_email(self, subject, body):
         # Function to send email notifications
         msg = MIMEText(body)
@@ -88,9 +112,14 @@ class TradingBot:
         except Exception as e:
             logging.error(f"Failed to send email notification: {e}")
 
-    def get_demo_balance(self):
-        # Function to calculate demo balance
-        return self.demo_balance - self.api.get_balance()
+    def get_balance(self):
+        if self.account_type == 'REAL':
+            self.api.change_balance(self.account_type)
+            return self.api.get_balance()
+        elif self.account_type == 'PRACTICE':
+            return self.demo_balance - self.api.get_balance()
+        else:
+            raise ValueError("Unsupported account type")
 
     def moving_average(self, data, period):
         return sum(data[-period:]) / period if len(data) >= period else 0
@@ -104,7 +133,7 @@ class TradingBot:
         new_row = {
             'Trade ID': trade_id,
             'Timestamp': timestamp,
-            'Direction' : direction,
+            'Direction': direction,
             'Strategy': strategy,
             'Status': trade_status,
             'Amount': amount,
@@ -138,7 +167,7 @@ class TradingBot:
         logging.error("Max retries exceeded, unable to retrieve trade result")
         return None, None
 
-    def run_trading_strategy(self):
+    def attack_the_market(self):
         try:
             self.create_excel_writer(
                 ['Trade ID', 'Timestamp','Direction','Strategy', 'Status', 'Amount', 'Trade Result', 'Balance', 'Profit' , 'Duration', 'Martingale'])
@@ -156,7 +185,6 @@ class TradingBot:
 
                 if len(candles) < size:
                     logging.warning("Not enough data for analysis")
-                    print("Not enough data for analysis")
                     continue
 
                 close_prices = [candle['close'] for candle in candles]
@@ -168,7 +196,6 @@ class TradingBot:
                 else:
                     direction = "put"  # Sell
 
-
                 if direction != 'none':
 
                         status, trade_id = self.api.buy_digital_spot(self.asset,self.global_amount, direction, self.duration)
@@ -176,7 +203,6 @@ class TradingBot:
                         if status:
                             logging.info(
                                 f"Trade executed successfully: {direction} on {self.asset} with Trade ID {trade_id} and Amount {self.global_amount}")
-                            print(f"Trade executed successfully: {direction} on {self.asset}")
 
                             time.sleep(self.duration * 60)  # Wait for the trade to complete (duration + 10 seconds buffer)
                             result,trade_result = self.check_trade_result(trade_id)
@@ -185,16 +211,13 @@ class TradingBot:
 
                                 result_str = 'Win' if trade_result > 0 else 'Loss'
                                 logging.info(
-                                    f"Trade result: {result_str} for Trade ID {trade_id}. Profit/Loss: {trade_result}. New Balance: {self.get_demo_balance()}")
-                                print(f"Trade result: {result_str}")
-                                print(f"Profit/Loss: {trade_result}")
-                                print("Balance:", self.get_demo_balance())
+                                    f"Trade result: {result_str} for Trade ID {trade_id}. Profit/Loss: {trade_result}. New Balance: {self.get_balance()}")
 
-                                self.log_trade_result(trade_id, direction, self.global_amount, result_str, self.get_demo_balance(), trade_result,self.duration,self.martingale)
+                                self.log_trade_result(trade_id, direction, self.global_amount, result_str, self.get_balance(), trade_result, self.duration, self.martingale)
 
                                 if trade_result <= 0:
 
-                                    if 2 * (self.martingale * self.global_amount) <= self.get_demo_balance():
+                                    if 2 * (self.martingale * self.global_amount) <= self.get_balance():
                                         self.global_amount *= self.martingale
                                         logging.info(f"Martingale applied. New amount for the next trade: {self.global_amount}")
                                     else:
@@ -206,17 +229,14 @@ class TradingBot:
 
                             else:
                                 logging.error("Failed to retrieve trade result")
-                                print("Failed to retrieve trade result")
 
                         else:
                             logging.error(f"Trade execution failed: {trade_id}")
-                            print(f"Trade execution failed: {trade_id}")
 
         except Exception as e:
             logging.error(f"An error occurred: {e}")
-            print(f"An error occurred: {e}")
             time.sleep(10)  # Wait before retrying in case of an error
 
 if __name__ == "__main__":
     bot = TradingBot()
-    bot.run_trading_strategy()
+    bot.attack_the_market()
