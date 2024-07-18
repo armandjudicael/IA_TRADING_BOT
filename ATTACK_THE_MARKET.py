@@ -89,7 +89,6 @@ class TradingBot:
             logging.error(f"Failed to send email notification: {e}")
 
     def get_demo_balance(self):
-        self.api.change_balance()
         # Function to calculate demo balance
         return self.demo_balance - self.api.get_balance()
 
@@ -169,46 +168,49 @@ class TradingBot:
                 else:
                     direction = "put"  # Sell
 
-                status, trade_id = self.api.buy_digital_spot(self.asset,self.global_amount, direction, self.duration)
 
-                if status:
-                    logging.info(
-                        f"Trade executed successfully: {direction} on {self.asset} with Trade ID {trade_id} and Amount {self.global_amount}")
-                    print(f"Trade executed successfully: {direction} on {self.asset}")
+                if direction != 'none':
 
-                    time.sleep(self.duration * 60)  # Wait for the trade to complete (duration + 10 seconds buffer)
-                    result,trade_result = self.check_trade_result(trade_id)
+                        status, trade_id = self.api.buy_digital_spot(self.asset,self.global_amount, direction, self.duration)
 
-                    if trade_result is not None:
-
-                        result_str = 'Win' if trade_result > 0 else 'Loss'
-                        logging.info(
-                            f"Trade result: {result_str} for Trade ID {trade_id}. Profit/Loss: {trade_result}. New Balance: {self.get_demo_balance()}")
-                        print(f"Trade result: {result_str}")
-                        print(f"Profit/Loss: {trade_result}")
-                        print("Balance:", self.get_demo_balance())
-
-                        self.log_trade_result(trade_id, direction, self.global_amount, result_str, self.get_demo_balance(), trade_result,self.duration,self.martingale)
-
-                        if trade_result <= 0:
-
-                            if 2 * (self.martingale * self.global_amount) <= self.get_demo_balance():
-                                self.global_amount *= self.martingale
-                                logging.info(f"Martingale applied. New amount for the next trade: {self.global_amount}")
-                            else:
-                                self.global_amount = float(self.config['Trading']['amount'])
-                        else:
-                            self.global_amount = float(self.config['Trading']['amount'])
+                        if status:
                             logging.info(
-                                f"Trade was successful. Resetting amount to {self.global_amount} for the next trade.")
+                                f"Trade executed successfully: {direction} on {self.asset} with Trade ID {trade_id} and Amount {self.global_amount}")
+                            print(f"Trade executed successfully: {direction} on {self.asset}")
 
-                    else:
-                        logging.error("Failed to retrieve trade result")
-                        print("Failed to retrieve trade result")
+                            time.sleep(self.duration * 60)  # Wait for the trade to complete (duration + 10 seconds buffer)
+                            result,trade_result = self.check_trade_result(trade_id)
 
-                else:
-                    logging.error(f"Trade execution failed: {trade_id}")
-                    print(f"Trade execution failed: {trade_id}")
+                            if trade_result is not None:
+
+                                result_str = 'Win' if trade_result > 0 else 'Loss'
+                                logging.info(
+                                    f"Trade result: {result_str} for Trade ID {trade_id}. Profit/Loss: {trade_result}. New Balance: {self.get_demo_balance()}")
+                                print(f"Trade result: {result_str}")
+                                print(f"Profit/Loss: {trade_result}")
+                                print("Balance:", self.get_demo_balance())
+
+                                self.log_trade_result(trade_id, direction, self.global_amount, result_str, self.get_demo_balance(), trade_result,self.duration,self.martingale)
+
+                                if trade_result <= 0:
+
+                                    if 2 * (self.martingale * self.global_amount) <= self.get_demo_balance():
+                                        self.global_amount *= self.martingale
+                                        logging.info(f"Martingale applied. New amount for the next trade: {self.global_amount}")
+                                    else:
+                                        self.global_amount = float(self.config['Trading']['amount'])
+                                else:
+                                    self.global_amount = float(self.config['Trading']['amount'])
+                                    logging.info(
+                                        f"Trade was successful. Resetting amount to {self.global_amount} for the next trade.")
+
+                            else:
+                                logging.error("Failed to retrieve trade result")
+                                print("Failed to retrieve trade result")
+
+                        else:
+                            logging.error(f"Trade execution failed: {trade_id}")
+                            print(f"Trade execution failed: {trade_id}")
 
         except Exception as e:
             logging.error(f"An error occurred: {e}")
