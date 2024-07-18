@@ -15,7 +15,6 @@ def calculate_rsi(close_prices, window=14):
     df = pd.DataFrame({'Close': close_prices})
     indicator_rsi = RSIIndicator(close=df['Close'], window=window)
     df['rsi'] = indicator_rsi.rsi()
-
     return df['rsi'].iloc[-1]
 
 def rsi_strategy(candles, rsi_overbought=70, rsi_oversold=30, rsi_window=14):
