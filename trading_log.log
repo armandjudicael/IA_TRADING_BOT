@@ -300,3 +300,12 @@
 2024-07-18 14:55:01,541 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19146054610 and Amount 1.0
 2024-07-18 23:19:16,144 - ERROR - error from callback <bound method WebsocketClient.on_message of <iqoptionapi.ws.client.WebsocketClient object at 0x000001C08C4E7EF0>>: 'isSuccessful'
 2024-07-18 23:21:36,760 - ERROR - Connection is already closed.
+2024-07-19 08:23:01,346 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19148036381 and Amount 1.0
+2024-07-19 08:24:01,352 - INFO - Trade result: Win for Trade ID 19148036381. Profit/Loss: 0.30000000000000004. New Balance: 100.0
+2024-07-19 08:24:01,407 - INFO - Trade was successful. Resetting amount to 1.0 for the next trade.
+2024-07-19 08:25:01,248 - INFO - Trade executed successfully: call on NZDUSD with Trade ID 19148039231 and Amount 1.0
+2024-07-19 08:26:01,281 - INFO - Trade result: Loss for Trade ID 19148039231. Profit/Loss: -1. New Balance: 100.3
+2024-07-19 08:26:01,463 - INFO - Martingale applied. New amount for the next trade: 2.0
+2024-07-19 08:27:01,464 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19148042278 and Amount 2.0
+2024-07-19 08:28:01,463 - INFO - Trade result: Loss for Trade ID 19148042278. Profit/Loss: -2. New Balance: 101.3
+2024-07-19 08:28:01,492 - INFO - Martingale applied. New amount for the next trade: 4.0

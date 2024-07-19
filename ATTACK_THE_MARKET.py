@@ -11,9 +11,6 @@ import os
 
 class TradingBot:
     def __init__(self):
-        # Configure logging
-        logging.basicConfig(filename='trading_log.log', level=logging.INFO,
-                            format='%(asctime)s - %(levelname)s - %(message)s')
         self.config = self.load_config()
         try:
             self.email = self.config['IQOption']['email']
@@ -34,8 +31,30 @@ class TradingBot:
             self.smtp_user = self.config['Email']['smtp_user']
             self.smtp_password = self.config['Email']['smtp_password']
             self.notification_email = self.config['Email']['notification_email']
+
+            self.excel_directory = self.config['Paths']['excel_directory']
+            self.log_directory = self.config['Paths']['log_directory']
+
+            # Ensure directories exist
+            os.makedirs(self.excel_directory, exist_ok=True)
+            os.makedirs(self.log_directory, exist_ok=True)
+
+            # Initialize logging
+            log_file = os.path.join(self.log_directory, 'trading_log.log')
+            logging.basicConfig(filename=log_file, level=logging.INFO,
+                                format='%(asctime)s - %(levelname)s - %(message)s')
+
+            self.create_excel_writer(
+                ['Trade ID', 'Timestamp', 'Direction', 'Strategy', 'Status', 'Amount', 'Trade Result', 'Balance',
+                 'Profit',
+                 'Duration', 'Martingale'], self.excel_directory)
+
+            self.connect_api()
+
         except KeyError as e:
             raise KeyError(f"Missing key in config.ini: {e}")
+
+
     def load_config(self):
         # Load configuration from a file
         config = configparser.ConfigParser()
@@ -63,12 +82,6 @@ class TradingBot:
                 logging.error(f'Failed to connect: {reason}')
                 return False
 
-            if self.account_type == 'PRACTICE':
-                reset_status = self.api.reset_practice_balance()
-                if not reset_status:
-                    logging.error('Failed to reset practice balance')
-                    return False
-
             if reason == "2FA":
                 code_sms = input("Enter the received code: ")
                 status, reason = self.api.connect_2fa(code_sms)
@@ -82,12 +95,22 @@ class TradingBot:
             logging.exception(f'Exception occurred while connecting: {e}')
             return False
 
-    def create_excel_writer(self, columns):
-        """Create a new Excel file or open an existing one for logging backtesting results."""
-        self.excel_file = f'trade_monitoring_{random.randint(1000, 9999)}.xlsx'
+    def create_excel_writer(self, columns, directory='.'):
+        """
+        Create a new Excel file or open an existing one for logging backtesting results.
+
+        Parameters:
+        - columns: list
+            List of column names for the DataFrame.
+        - directory: str, optional
+            Directory where the Excel file should be saved. Defaults to current directory ('.').
+
+        """
+        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        self.excel_file = os.path.join(directory, f'trade_monitoring_{current_time}.xlsx')
 
         if os.path.exists(self.excel_file):
-            os.remove(self.excel_file)  # Remove the corrupted file to avoid BadZipFile error
+            os.remove(self.excel_file)  # Remove the existing file if it exists
 
         # Create a new Excel file
         self.writer = pd.ExcelWriter(self.excel_file, engine='openpyxl', mode='w')
@@ -95,7 +118,9 @@ class TradingBot:
         # Initialize results DataFrame
         self.results_df = pd.DataFrame(columns=columns)
         self.results_df.to_excel(self.writer, sheet_name='Results', index=False)
-        self.writer._save()  # Save the file initially
+
+        # Save and close the Excel writer
+        self.writer._save()
 
     def send_email(self, subject, body):
         # Function to send email notifications
@@ -117,7 +142,7 @@ class TradingBot:
             self.api.change_balance(self.account_type)
             return self.api.get_balance()
         elif self.account_type == 'PRACTICE':
-            return self.demo_balance - self.api.get_balance()
+            return self.demo_balance
         else:
             raise ValueError("Unsupported account type")
 
@@ -169,11 +194,8 @@ class TradingBot:
 
     def attack_the_market(self):
         try:
-            self.create_excel_writer(
-                ['Trade ID', 'Timestamp','Direction','Strategy', 'Status', 'Amount', 'Trade Result', 'Balance', 'Profit' , 'Duration', 'Martingale'])
-            self.connect_api()
-
             while True:
+
                 current_time = datetime.datetime.now()
                 next_minute = (current_time + datetime.timedelta(minutes=self.duration)).replace(second=0, microsecond=0)
                 sleep_duration = (next_minute - current_time).total_seconds()
@@ -217,6 +239,10 @@ class TradingBot:
 
                                 if trade_result <= 0:
 
+                                    if self.account_type == 'PRACTICE':
+                                        # update demo balance
+                                        self.demo_balance-=trade_result
+
                                     if 2 * (self.martingale * self.global_amount) <= self.get_balance():
                                         self.global_amount *= self.martingale
                                         logging.info(f"Martingale applied. New amount for the next trade: {self.global_amount}")
@@ -224,6 +250,7 @@ class TradingBot:
                                         self.global_amount = float(self.config['Trading']['amount'])
                                 else:
                                     self.global_amount = float(self.config['Trading']['amount'])
+                                    self.demo_balance += trade_result
                                     logging.info(
                                         f"Trade was successful. Resetting amount to {self.global_amount} for the next trade.")
 
