@@ -1,3 +1,123 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+__pycache__/
+*.pyc
+*.pyo
+dist/
+build/
+
+# IDE files
+.idea/
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Linux
+*.swp
+
+# Python localization
+*.mo
+*.pot
+
+# Python bytecode
+*.pyc
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# pytest
+*.pytest_cache/
+
+# Rope project settings
+.ropeproject
+
+# Sublime Text
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/
+
+# PyCharm files
+*.iml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# Environments
+.env
 .venv
-.idea
-ATTACK_THE_MARKET.spec
+env/
+venv/
+ENV/
+
+# Logs
+*.log
+
+# Mac OS files
+.DS_Store
+
+# Pytest cache
+.pytest_cache/
+
+# Ignore any backup files
+*~
+
+# Ignore pipenv or poetry lock file
+Pipfile.lock
+poetry.lock
+
+# Ignore Jupyter backup and autosave files
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
