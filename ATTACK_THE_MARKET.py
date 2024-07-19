@@ -246,7 +246,7 @@ class TradingBot:
                             logging.info(
                                 f"Trade executed successfully: {direction} on {self.asset} with Trade ID {trade_id} and Amount {self.global_amount}")
 
-                            time.sleep(self.duration * 60)  # Wait for the trade to complete (duration + 10 seconds buffer)
+                            time.sleep(self.duration * 55)  # Wait for the trade to complete (duration + 10 seconds buffer)
                             result,trade_result = self.check_trade_result(trade_id)
 
                             if trade_result is not None:
