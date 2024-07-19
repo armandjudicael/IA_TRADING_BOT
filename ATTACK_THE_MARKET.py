@@ -70,6 +70,26 @@ class TradingBot:
 
         return config
 
+
+    def fetch_available_pairs_with_payouts(self):
+        self.api.connect()
+        pairs = self.api.get_all_open_time()
+        available_pairs = [pair for pair in pairs['digital'] if pairs['digital'][pair]['open']]
+        return available_pairs
+
+    def get_payout(self, pair):
+        instruments = self.api.get_all_init()
+        if "instruments" in instruments and "digital-option" in instruments["instruments"]:
+            digital_options = instruments["instruments"]["digital-option"]
+            for option in digital_options:
+                if option["active_id"] == self.api.get_name_by_activeId(pair)["active_id"]:
+                    return option["profit"]["commission"]
+        return None
+
+    def is_pair_open(self, pair):
+        self.api.connect()
+        pairs = self.api.get_all_open_time()
+        return pairs['digital'][pair]['open']
     import logging
 
     def connect_api(self):
@@ -106,7 +126,7 @@ class TradingBot:
             Directory where the Excel file should be saved. Defaults to current directory ('.').
 
         """
-        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        current_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
         self.excel_file = os.path.join(directory, f'trade_monitoring_{current_time}.xlsx')
 
         if os.path.exists(self.excel_file):
