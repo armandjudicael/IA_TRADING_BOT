@@ -9,6 +9,7 @@ services:
       - CONFIG_FILE=config-test.ini
       - EXCEL_DIRECTORY=/app/REPORTING
       - LOG_DIRECTORY=/app/Logging
+      - MODE=docker  # New environment variable for mode
     volumes:
       - C:\Users\judic\Documents\REPORTING:/app/REPORTING
       - C:\Users\judic\Documents\Logging:/app/Logging

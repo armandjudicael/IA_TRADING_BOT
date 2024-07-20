@@ -35,8 +35,15 @@ class TradingBot:
             self.smtp_password = self.config['Email']['smtp_password']
             self.notification_email = self.config['Email']['notification_email']
 
-            self.excel_directory = self.config['Paths']['excel_directory']
-            self.log_directory = self.config['Paths']['log_directory']
+            # Determine if running in Docker or Windows
+            mode = os.getenv('MODE', 'windows')
+
+            if mode == 'docker':
+                self.excel_directory = '/app/REPORTING'
+                self.log_directory = '/app/Logging'
+            else:
+                self.excel_directory = self.config['Paths']['excel_directory']
+                self.log_directory = self.config['Paths']['log_directory']
 
             # Initialize top assets dynamically
             self.top_assets = [value for key, value in self.config['top_assets'].items()]
@@ -67,24 +74,21 @@ class TradingBot:
         # Read configuration from the constructed filename
         config.read(config_filename)
 
-    def load_docker_environment(self,config_file,config):
+    def load_docker_environment(self,config):
+        config_file = os.getenv('CONFIG_FILE', 'config.ini')
         if os.path.exists(config_file):
             return config.read(config_file)
         else:
             raise FileNotFoundError(f"Configuration file {config_file} not found.")
 
     def load_config(self):
-
         # Load configuration from a file
         config = configparser.ConfigParser()
-
-        config_file = os.getenv('CONFIG_FILE', 'config.ini')
-
-        if config_file is not None :
-            self.load_docker_environment(config_file,config)
+        mode = os.getenv('MODE', 'windows')
+        if mode == 'docker':
+            self.load_docker_environment(config)
         else:
             self.load_windows_environment(config)
-
         return config
 
     def init_favorite_asset(self):
@@ -204,7 +208,7 @@ class TradingBot:
 
             if not status:
                 logging.error(f'Failed to connect: {reason}')
-                return False
+                exit(1)
 
             if reason == "2FA":
                 code_sms = input("Enter the received code: ")
