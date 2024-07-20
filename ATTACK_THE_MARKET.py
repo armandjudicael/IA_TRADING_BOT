@@ -8,6 +8,7 @@ from email.mime.text import MIMEText
 from iqoptionapi.stable_api import IQ_Option
 import pandas as pd
 import os
+from Report_Processor import ReportProcessor
 
 class TradingBot:
     def __init__(self):
@@ -19,13 +20,14 @@ class TradingBot:
             self.account_type = self.config['IQOption']['accountType']
             self.global_amount = float(self.config['Trading']['amount'])
             self.martingale = float(self.config['Trading']['martingale'])
-
-            if self.account_type =='PRACTICE' :
-               self.demo_balance = float(self.config['Trading']['demo_initial_balance'])
+            self.total_profit = 0
+            if self.account_type == 'PRACTICE':
+                self.demo_balance = float(self.config['Trading']['demo_initial_balance'])
 
             self.short_period = int(self.config['Trading']['short_period'])
             self.long_period = int(self.config['Trading']['long_period'])
-            self.asset = self.config['Trading']['asset']
+            self.strategy = self.config['Trading']['default_strategy']
+            self.pair = None
             self.duration = int(self.config['Trading']['duration'])
             self.smtp_server = self.config['Email']['smtp_server']
             self.smtp_port = int(self.config['Email']['smtp_port'])
@@ -36,69 +38,92 @@ class TradingBot:
             self.excel_directory = self.config['Paths']['excel_directory']
             self.log_directory = self.config['Paths']['log_directory']
 
-            # Initialize top assets
-            self.top_assets = [
-                self.config['top_assets']['1'],
-                self.config['top_assets']['2'],
-                self.config['top_assets']['3'],
-                self.config['top_assets']['4'],
-                self.config['top_assets']['5']
-            ]
+            # Initialize top assets dynamically
+            self.top_assets = [value for key, value in self.config['top_assets'].items()]
 
             # Ensure directories exist
             os.makedirs(self.excel_directory, exist_ok=True)
             os.makedirs(self.log_directory, exist_ok=True)
 
             # Initialize logging
-            log_file = os.path.join(self.log_directory, 'trading_log.log')
+            random_number = random.randint(1000, 9999)
+            # Initialize logging with a unique log file name
+            log_file = os.path.join(self.log_directory, f'trading_log_{random_number}.log')
             logging.basicConfig(filename=log_file, level=logging.INFO,
                                 format='%(asctime)s - %(levelname)s - %(message)s')
 
-            self.create_excel_writer(
-                ['Trade ID', 'Timestamp', 'Direction', 'Strategy', 'Status', 'Amount', 'Trade Result', 'Balance',
-                 'Profit',
-                 'Duration', 'Martingale'], self.excel_directory)
+            self.report_processor = ReportProcessor(self.excel_directory)
 
             self.connect_api()
 
         except KeyError as e:
             raise KeyError(f"Missing key in config.ini: {e}")
 
-
-    def load_config(self):
-        # Load configuration from a file
-        config = configparser.ConfigParser()
+    def load_windows_environment(self,config):
         config.read('config.ini')
-
         mode = config['Environment']['mode']
-
         # Construct the filename based on mode
         config_filename = f'config-{mode.lower()}.ini'
-
         # Read configuration from the constructed filename
         config.read(config_filename)
+
+    def load_docker_environment(self,config_file,config):
+        if os.path.exists(config_file):
+            return config.read(config_file)
+        else:
+            raise FileNotFoundError(f"Configuration file {config_file} not found.")
+
+    def load_config(self):
+
+        # Load configuration from a file
+        config = configparser.ConfigParser()
+
+        config_file = os.getenv('CONFIG_FILE', 'config.ini')
+
+        if config_file is not None :
+            self.load_docker_environment(config_file,config)
+        else:
+            self.load_windows_environment(config)
 
         return config
 
     def init_favorite_asset(self):
-        logging.info("Initializing favorite asset...")
-        for top_asset in self.top_assets:
-            if self.is_pair_open(top_asset):
-                logging.info(f"Top asset {top_asset} is open.")
-                return top_asset
-            else:
-                logging.info(f"Top asset {top_asset} is not open. Fetching available pairs with payouts.")
 
-        # If no top asset is open, check for the highest payout
-        highest_payout_pair = self.get_highest_payout_pair()
-        if highest_payout_pair:
-            logging.info(f"No top assets are open. Highest payout pair is {highest_payout_pair}.")
-            return highest_payout_pair
+        if self.pair is not None and self.is_pair_open(self.pair):
+            return self.pair
+        elif self.pair is None or (self.pair is not None and not self.is_pair_open(self.pair)):
+
+            logging.info("Initializing favorite asset...")
+            for top_asset in self.top_assets:
+                if self.is_pair_open(top_asset):
+                    logging.info(f"Top asset {top_asset} is open.")
+                    return top_asset
+                else:
+                    logging.info(f"Top asset {top_asset} is not open. Fetching available pairs with payouts.")
+
+            # Check for OTC versions of top assets if no highest payout pair found
+            for asset in self.top_assets:
+                otc_pair = f"{asset}-OTC"
+                if self.is_pair_open(otc_pair):
+                    logging.info(f"No high payout pairs found. Selecting first available OTC pair: {otc_pair}")
+                    return otc_pair
+
+            # If no OTC version is open, pick the first available pair
+            available_pairs = self.fetch_available_pairs_with_payouts()
+            if available_pairs:
+                logging.info(f"No OTC pairs available. Selecting first available pair: {available_pairs[0]}")
+                return available_pairs[0]
+
+            # If no top asset is open, check for the highest payout
+            highest_payout_pair = self.get_highest_payout_pair()
+            if highest_payout_pair:
+                logging.info(f"No top assets are open. Highest payout pair is {highest_payout_pair}.")
+                return highest_payout_pair
 
         logging.error("No suitable asset found.")
         return None
 
-    def fetch_available_pairs_with_payouts(self, max_retries=3, delay=5):
+    def fetch_available_pairs_with_payouts(self, max_retries=3, delay=2):
         for attempt in range(max_retries):
             try:
                 self.api.connect()
@@ -127,7 +152,8 @@ class TradingBot:
                 logging.warning(f"No payout information found for {pair}.")
                 return None
             except Exception as e:
-                logging.error(f"Error fetching payout for {pair}: {e}. Retrying in {delay} seconds... (Attempt {attempt + 1}/{max_retries})")
+                logging.error(
+                    f"Error fetching payout for {pair}: {e}. Retrying in {delay} seconds... (Attempt {attempt + 1}/{max_retries})")
                 time.sleep(delay)
         logging.error(f"Failed to fetch payout for {pair} after {max_retries} attempts.")
         return None
@@ -143,11 +169,15 @@ class TradingBot:
                     if payout and payout > highest_payout:
                         highest_payout = payout
                         highest_payout_pair = pair
-                logging.info(f"Highest payout pair: {highest_payout_pair} with payout {highest_payout}")
-                return highest_payout_pair
+                if highest_payout_pair:
+                    logging.info(f"Highest payout pair: {highest_payout_pair} with payout {highest_payout}")
+                    return highest_payout_pair
             except Exception as e:
-                logging.error(f"Error fetching highest payout pair: {e}. Retrying in {delay} seconds... (Attempt {attempt + 1}/{max_retries})")
+                logging.error(
+                    f"Error fetching highest payout pair: {e}. Retrying in {delay} seconds... (Attempt {attempt + 1}/{max_retries})")
                 time.sleep(delay)
+
+        # If no high payout pairs found, log an error and return None
         logging.error(f"Failed to determine highest payout pair after {max_retries} attempts.")
         return None
 
@@ -160,10 +190,12 @@ class TradingBot:
                 logging.info(f"Is pair {pair} open: {is_open}")
                 return is_open
             except Exception as e:
-                logging.error(f"Error checking if pair {pair} is open: {e}. Retrying in {delay} seconds... (Attempt {attempt + 1}/{max_retries})")
+                logging.error(
+                    f"Error checking if pair {pair} is open: {e}. Retrying in {delay} seconds... (Attempt {attempt + 1}/{max_retries})")
                 time.sleep(delay)
         logging.error(f"Failed to determine if pair {pair} is open after {max_retries} attempts.")
         return False
+
     def connect_api(self):
         try:
             # Connect to the IQ Option API
@@ -186,33 +218,6 @@ class TradingBot:
         except Exception as e:
             logging.exception(f'Exception occurred while connecting: {e}')
             return False
-
-    def create_excel_writer(self, columns, directory='.'):
-        """
-        Create a new Excel file or open an existing one for logging backtesting results.
-
-        Parameters:
-        - columns: list
-            List of column names for the DataFrame.
-        - directory: str, optional
-            Directory where the Excel file should be saved. Defaults to current directory ('.').
-
-        """
-        current_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        self.excel_file = os.path.join(directory, f'trade_monitoring_{current_time}.xlsx')
-
-        if os.path.exists(self.excel_file):
-            os.remove(self.excel_file)  # Remove the existing file if it exists
-
-        # Create a new Excel file
-        self.writer = pd.ExcelWriter(self.excel_file, engine='openpyxl', mode='w')
-
-        # Initialize results DataFrame
-        self.results_df = pd.DataFrame(columns=columns)
-        self.results_df.to_excel(self.writer, sheet_name='Results', index=False)
-
-        # Save and close the Excel writer
-        self.writer._save()
 
     def send_email(self, subject, body):
         # Function to send email notifications
@@ -240,31 +245,6 @@ class TradingBot:
 
     def moving_average(self, data, period):
         return sum(data[-period:]) / period if len(data) >= period else 0
-
-    def log_trade_result(self, trade_id, direction, amount, result, balance, profit,duration, martingale):
-        """Log the trade result to the Excel file."""
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        strategy = 'Moving Average Crossover Strategy'
-        trade_status = 'Closed'
-
-        new_row = {
-            'Trade ID': trade_id,
-            'Timestamp': timestamp,
-            'Direction': direction,
-            'Strategy': strategy,
-            'Status': trade_status,
-            'Amount': amount,
-            'Trade Result': result,
-            'Balance': balance,
-            'Profit': profit,
-            'Duration': duration,
-            'Martingale': martingale
-        }
-
-        trade_df = pd.DataFrame([new_row])  # Create a DataFrame with one row
-        self.results_df = pd.concat([self.results_df, trade_df], ignore_index=True)
-        self.results_df.to_excel(self.writer, sheet_name='Results', index=False)
-        self.writer._save()
 
     def check_trade_result(self, trade_id, max_retries=3, retry_delay=2):
         # Function to check trade result with retry mechanism
@@ -294,7 +274,7 @@ class TradingBot:
 
         try:
             # Fetch the candlestick data
-            candles = self.api.get_candles(self.asset, self.duration, size, end_time)
+            candles = self.api.get_candles(self.pair, self.duration, size, end_time)
 
             # Check if we have enough data for analysis
             if len(candles) < size:
@@ -325,7 +305,6 @@ class TradingBot:
         """
         Sleeps until the start of the next interval based on the specified duration.
         """
-
         try:
             # Get the current time
             current_time = datetime.datetime.now()
@@ -351,31 +330,34 @@ class TradingBot:
         Handles the result of an already executed trade and adjusts the trading parameters accordingly.
         """
         logging.info(
-            f"Handling result for trade with Trade ID {trade_id}. Direction: {self.direction}, Asset: {self.asset}, Amount: {self.global_amount}")
+            f"Handling result for trade with Trade ID {trade_id}. Direction: {self.direction}, Asset: {self.pair}, Amount: {self.global_amount}")
 
         # Wait for the trade to complete (duration + 10 seconds buffer)
-        time.sleep(self.duration * 50)
+        time.sleep(self.duration * 60 + 2)
 
         try:
-            result, trade_result = self.check_trade_result(trade_id)
+            result, profit = self.check_trade_result(trade_id)
 
-            if trade_result is not None:
+            if profit is not None:
 
-                result_str = 'Win' if trade_result > 0 else 'Loss'
+                result_str = 'Win' if profit > 0 else 'Loss'
 
                 logging.info(
-                    f"Trade result: {result_str} for Trade ID {trade_id}.  Result : {result_str}. New Balance: {self.get_balance()}")
+                    f"Trade result: {result_str} for Trade ID {trade_id}.  Profit : {profit}. New Balance: {self.get_balance()} . Total profit : {self.total_profit} ")
 
-                self.log_trade_result(trade_id, self.direction, self.global_amount, result_str, self.get_balance(),
-                                      trade_result, self.duration, self.martingale)
+                if profit < 0:
 
-                if trade_result < 0:
-
-                    self.handle_loss(trade_result)
+                    self.handle_loss(profit)
 
                 else:
 
-                    self.handle_win(trade_result)
+                    self.handle_win(profit)
+
+                timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                self.report_processor.log_trade_result(trade_id, self.direction, self.global_amount, result_str,
+                                                       self.get_balance(),
+                                                       profit, self.duration,timestamp,self.strategy,self.total_profit)
 
             else:
                 logging.error("Failed to retrieve trade result")
@@ -383,19 +365,20 @@ class TradingBot:
         except Exception as e:
             logging.error(f"Error handling trade result: {e}")
 
-    def handle_loss(self, trade_result):
+    def handle_loss(self, profit):
         """
         Handles the adjustments required after a loss.
         """
         if self.account_type == 'PRACTICE':
+
             # Update demo balance
-            self.demo_balance -= abs(trade_result)
+            self.demo_balance -= abs(profit)
+            self.total_profit -= abs(profit)
 
         if 2 * (self.martingale * self.global_amount) <= self.get_balance():
             self.apply_martingale()
         else:
             self.reset_global_amount()
-
 
     def reset_global_amount(self):
         """
@@ -410,24 +393,23 @@ class TradingBot:
         self.global_amount *= self.martingale
         logging.info(f"Martingale applied. New amount for the next trade: {self.global_amount}")
 
-
     def handle_win(self, trade_result):
         """
         Handles the adjustments required after a win.
         """
         self.reset_global_amount()
         self.demo_balance += abs(trade_result)
+        self.total_profit += abs(trade_result)
         logging.info(f"Trade was successful. Resetting amount to {self.global_amount} for the next trade.")
 
+    def unleash_the_beast(self):
 
-
-    def attack_the_market(self):
         try:
             while True:
 
-                self.asset = self.init_favorite_asset()
+                self.pair = self.init_favorite_asset()
 
-                if self.asset is not None:
+                if self.pair is not None:
 
                     self.sleep_until_next_interval()
 
@@ -435,20 +417,23 @@ class TradingBot:
 
                     if self.direction is not None:
 
-                            status, trade_id = self.api.buy_digital_spot(self.asset,self.global_amount, self.direction, self.duration)
+                        status, trade_id = self.api.buy_digital_spot(self.pair, self.global_amount, self.direction,
+                                                                     self.duration)
 
-                            if status:
+                        if status:
 
-                                self.handle_trade_result(trade_id)
+                            self.handle_trade_result(trade_id)
 
-                            else:
-                                logging.error(f"Trade execution failed: {trade_id}")
-
+                        else:
+                            logging.error(f"Trade execution failed: {trade_id}")
 
         except Exception as e:
             logging.error(f"An error occurred: {e}")
+            self.report_processor.log_trade_result('Trade ID', 'Direction', 'Amount', 'Trade Result', 'Balance',
+                                                   'Profit', 'Duration',
+                                                   'Timestamp', 'Strategy', 'Total profit')
             time.sleep(2)  # Wait before retrying in case of an error
 
 if __name__ == "__main__":
     bot = TradingBot()
-    bot.attack_the_market()
+    bot.unleash_the_beast()

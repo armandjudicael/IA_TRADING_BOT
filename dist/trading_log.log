@@ -1,2 +1,0 @@
-2024-07-18 14:51:01,578 - INFO - Trade executed successfully: put on NZDUSD with Trade ID 19146045546 and Amount 1.0
-2024-07-18 14:52:01,579 - ERROR - An error occurred: IQ_Option.change_balance() missing 1 required positional argument: 'Balance_MODE'

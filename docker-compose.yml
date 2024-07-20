@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  tradingbot:
+    build:
+      context: .  # Path to the directory containing the Dockerfile
+      dockerfile: Dockerfile  # Name of the Dockerfile (if it's named something other than 'Dockerfile', specify it here)
+    container_name: tradingbot_container
+    environment:
+      - CONFIG_FILE=config-test.ini
+      - EXCEL_DIRECTORY=/app/REPORTING
+      - LOG_DIRECTORY=/app/Logging
+    volumes:
+      - C:\Users\judic\Documents\REPORTING:/app/REPORTING
+      - C:\Users\judic\Documents\Logging:/app/Logging
+    command: python ATTACK_THE_MARKET.py
+    restart: unless-stopped
