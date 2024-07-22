@@ -1,8 +1,11 @@
-from iqoptionapi.stable_api import IQ_Option
+import asyncio
+import aiohttp
 import pandas as pd
 import time
 import ta
 import logging
+from iqoptionapi.stable_api import IQ_Option
+from aiohttp import ClientSession
 
 # Constants
 EMAIL = "voahanginirina.noelline@gmail.com"
@@ -13,13 +16,17 @@ AMOUNT = 1
 DURATION = 1
 SLEEP_INTERVAL = 60  # Time in seconds to wait between checks
 RECONNECT_ATTEMPTS = 3
-HISTORICAL_PERIOD = 2592000  # Number of periods for historical data analysis
+HISTORICAL_PERIOD = 100  # Number of periods for historical data analysis
+
+# Global variable to store the trade direction
+trade_direction = None
+trade_lock = asyncio.Lock()
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s:%(message)s')
 
 
-def connect_to_iq_option(email, password):
+async def connect_to_iq_option(email, password):
     """
     Connect to IQ Option and handle reconnection attempts.
     """
@@ -30,17 +37,17 @@ def connect_to_iq_option(email, password):
             return api
         else:
             logging.warning(f"Connection attempt {attempt + 1} failed. Retrying...")
-            time.sleep(5)
+            await asyncio.sleep(5)
     logging.error("Failed to connect to IQ Option after multiple attempts.")
     raise Exception("Failed to connect to IQ Option")
 
 
-def get_realtime_data(api, symbol, interval=60):
+async def get_realtime_data(api, symbol, interval=60):
     """
     Retrieve real-time data from IQ Option.
     """
     try:
-        data = api.get_realtime_candles(symbol,HISTORICAL_PERIOD)
+        data = api.full_realtime_get_candle(symbol,HISTORICAL_PERIOD,500)
         return data
     except Exception as e:
         logging.error(f"Error fetching data: {e}")
@@ -96,39 +103,14 @@ def calculate_indicators(df, rolling_window, trend):
     return df
 
 
-def place_trade(api, symbol, amount, direction, duration):
+async def direction_calculation_task(api):
     """
-    Place a trade on IQ Option and check the result.
+    Async task for calculating trade direction.
     """
-    result, trade_id = api.buy(amount, symbol, direction, duration)
-    if result:
-        logging.info(f"Trade placed: {direction} {amount} {symbol}")
-        check_trade_result(api, trade_id)
-    else:
-        logging.error("Failed to place trade")
-
-
-def check_trade_result(api, trade_id):
-    """
-    Check the result of a trade.
-    """
-    while True:
-        trade_result = api.check_win_v3(trade_id)
-        if trade_result is not None:
-            logging.info(f"Trade result: {'Win' if trade_result > 0 else 'Loss'} (Profit: {trade_result})")
-            break
-        time.sleep(1)
-
-
-def main():
-    """
-    Main function to execute the trading strategy.
-    """
-    api = connect_to_iq_option(EMAIL, PASSWORD)
-
+    global trade_direction
     try:
         while True:
-            data = get_realtime_data(api, SYMBOL, INTERVAL)
+            data = await get_realtime_data(api, SYMBOL, INTERVAL)
             if data:
                 df = pd.DataFrame(data)
                 df['time'] = pd.to_datetime(df['from'], unit='s')
@@ -137,19 +119,73 @@ def main():
                 rolling_window, trend = analyze_market_conditions(df)
                 df = calculate_indicators(df, rolling_window, trend)
 
-                if df[df['False_Breakout'] & df['Confirmed']].shape[0] > 0:
-                    direction = 'put' if trend == "downtrend" else 'call'
-                    place_trade(api, SYMBOL, AMOUNT, direction, DURATION)
-                else:
-                    logging.info("No confirmed false breakout detected")
+                async with trade_lock:
+                    if df[df['False_Breakout'] & df['Confirmed']].shape[0] > 0:
+                        trade_direction = 'put' if trend == "downtrend" else 'call'
+                    else:
+                        trade_direction = None
 
-            time.sleep(SLEEP_INTERVAL)
-    except KeyboardInterrupt:
-        logging.info("Trading stopped by user")
+            await asyncio.sleep(SLEEP_INTERVAL)
     except Exception as e:
-        logging.error(f"An error occurred: {e}")
+        logging.error(f"Error in direction calculation task: {e}")
 
+
+async def place_trade(api, symbol, amount, direction, duration):
+    """
+    Place a trade on IQ Option and check the result.
+    """
+    result, trade_id = api.buy(amount, symbol, direction, duration)
+    if result:
+        logging.info(f"Trade placed: {direction} {amount} {symbol}")
+        await check_trade_result(api, trade_id)
+    else:
+        logging.error("Failed to place trade")
+
+
+async def check_trade_result(api, trade_id):
+    """
+    Check the result of a trade.
+    """
+    while True:
+        trade_result = api.check_win_v3(trade_id)
+        if trade_result is not None:
+            logging.info(f"Trade result: {'Win' if trade_result > 0 else 'Loss'} (Profit: {trade_result})")
+            break
+        await asyncio.sleep(1)
+
+
+async def trade_execution_task(api):
+    """
+    Async task for executing trades based on calculated direction.
+    """
+    global trade_direction
+    try:
+        while True:
+            async with trade_lock:
+                if trade_direction:
+                    await place_trade(api, SYMBOL, AMOUNT, trade_direction, DURATION)
+                    trade_direction = None  # Reset after placing the trade
+
+            await asyncio.sleep(SLEEP_INTERVAL)
+    except Exception as e:
+        logging.error(f"Error in trade execution task: {e}")
+
+
+async def main():
+    """
+    Main function to start the trading strategy.
+    """
+    api = await connect_to_iq_option(EMAIL, PASSWORD)
+
+    # Start direction calculation task
+    direction_task = asyncio.create_task(direction_calculation_task(api))
+
+    # Start trade execution task
+    trade_task = asyncio.create_task(trade_execution_task(api))
+
+    # Wait for both tasks to complete
+    await asyncio.gather(direction_task, trade_task)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
