@@ -13,7 +13,7 @@ AMOUNT = 1
 DURATION = 1
 SLEEP_INTERVAL = 60  # Time in seconds to wait between checks
 RECONNECT_ATTEMPTS = 3
-HISTORICAL_PERIOD = 500  # Number of periods for historical data analysis
+HISTORICAL_PERIOD = 2592000  # Number of periods for historical data analysis
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s:%(message)s')
@@ -40,7 +40,7 @@ def get_realtime_data(api, symbol, interval=60):
     Retrieve real-time data from IQ Option.
     """
     try:
-        data = api.get_candles(symbol, interval, HISTORICAL_PERIOD, time.time())
+        data = api.get_realtime_candles(symbol,HISTORICAL_PERIOD)
         return data
     except Exception as e:
         logging.error(f"Error fetching data: {e}")
@@ -51,20 +51,31 @@ def analyze_market_conditions(df):
     """
     Analyze market conditions to adjust indicator parameters dynamically.
     """
-    # Example logic: Adjust rolling window based on market volatility
-    volatility = df['close'].rolling(window=10).std().mean()
+    # Volatility analysis using ATR
+    df['ATR'] = ta.volatility.average_true_range(df['high'], df['low'], df['close'], window=14)
+    avg_atr = df['ATR'].mean()
 
-    if volatility < df['close'].mean() * 0.01:
+    # Trend analysis using MACD
+    df['MACD'] = ta.trend.macd(df['close'])
+    df['MACD_signal'] = ta.trend.macd_signal(df['close'])
+    macd_diff = (df['MACD'] - df['MACD_signal']).iloc[-1]
+
+    if avg_atr < df['close'].mean() * 0.01:
         rolling_window = 10  # Lower window for low volatility
-    elif volatility < df['close'].mean() * 0.02:
+    elif avg_atr < df['close'].mean() * 0.02:
         rolling_window = 20  # Medium window for medium volatility
     else:
         rolling_window = 30  # Higher window for high volatility
 
-    return rolling_window
+    if macd_diff > 0:
+        trend = "uptrend"
+    else:
+        trend = "downtrend"
+
+    return rolling_window, trend
 
 
-def calculate_indicators(df, rolling_window):
+def calculate_indicators(df, rolling_window, trend):
     """
     Calculate technical indicators for the given DataFrame with dynamic parameters.
     """
@@ -75,7 +86,13 @@ def calculate_indicators(df, rolling_window):
     df['Bollinger_High'] = ta.volatility.bollinger_hband(df['close'], window=rolling_window)
     df['Bollinger_Low'] = ta.volatility.bollinger_lband(df['close'], window=rolling_window)
     df['False_Breakout'] = (df['close'] > df['Resistance'].shift(1)) & (df['close'] < df['Resistance'])
-    df['Confirmed'] = (df['close'] > df['SMA']) & (df['RSI'] > 70) & (df['close'] < df['Bollinger_High'])
+
+    # Confirmed false breakout with trend consideration
+    if trend == "uptrend":
+        df['Confirmed'] = (df['close'] > df['SMA']) & (df['RSI'] > 70) & (df['close'] < df['Bollinger_High'])
+    else:
+        df['Confirmed'] = (df['close'] < df['SMA']) & (df['RSI'] < 30) & (df['close'] > df['Bollinger_Low'])
+
     return df
 
 
@@ -83,7 +100,7 @@ def place_trade(api, symbol, amount, direction, duration):
     """
     Place a trade on IQ Option and check the result.
     """
-    result, trade_id = api.buy_digital_spot(symbol,amount, direction, duration)
+    result, trade_id = api.buy(amount, symbol, direction, duration)
     if result:
         logging.info(f"Trade placed: {direction} {amount} {symbol}")
         check_trade_result(api, trade_id)
@@ -117,11 +134,11 @@ def main():
                 df['time'] = pd.to_datetime(df['from'], unit='s')
                 df.set_index('time', inplace=True)
 
-                rolling_window = analyze_market_conditions(df)
-                df = calculate_indicators(df, rolling_window)
+                rolling_window, trend = analyze_market_conditions(df)
+                df = calculate_indicators(df, rolling_window, trend)
 
                 if df[df['False_Breakout'] & df['Confirmed']].shape[0] > 0:
-                    direction = 'put'  # Assume we detected a false breakout and want to sell
+                    direction = 'put' if trend == "downtrend" else 'call'
                     place_trade(api, SYMBOL, AMOUNT, direction, DURATION)
                 else:
                     logging.info("No confirmed false breakout detected")
@@ -131,8 +148,7 @@ def main():
         logging.info("Trading stopped by user")
     except Exception as e:
         logging.error(f"An error occurred: {e}")
-    finally:
-        api.close()
+
 
 
 if __name__ == "__main__":
