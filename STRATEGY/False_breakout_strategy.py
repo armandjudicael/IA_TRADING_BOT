@@ -1,8 +1,8 @@
-import logging
-import time
-import ta
 from iqoptionapi.stable_api import IQ_Option
 import pandas as pd
+import time
+import ta
+import logging
 
 # Constants
 EMAIL = "voahanginirina.noelline@gmail.com"
@@ -11,9 +11,9 @@ SYMBOL = 'EURUSD-OTC'  # Using the OTC suffix
 INTERVAL = 60
 AMOUNT = 1
 DURATION = 1
-ROLLING_WINDOW = 20
 SLEEP_INTERVAL = 60  # Time in seconds to wait between checks
 RECONNECT_ATTEMPTS = 3
+HISTORICAL_PERIOD = 500  # Number of periods for historical data analysis
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s:%(message)s')
@@ -40,23 +40,40 @@ def get_realtime_data(api, symbol, interval=60):
     Retrieve real-time data from IQ Option.
     """
     try:
-        data = api.get_candles(symbol, interval, 100, time.time())
+        data = api.get_candles(symbol, interval, HISTORICAL_PERIOD, time.time())
         return data
     except Exception as e:
         logging.error(f"Error fetching data: {e}")
         return []
 
 
-def calculate_indicators(df):
+def analyze_market_conditions(df):
     """
-    Calculate technical indicators for the given DataFrame.
+    Analyze market conditions to adjust indicator parameters dynamically.
     """
-    df['Resistance'] = df['close'].rolling(window=ROLLING_WINDOW).max()
-    df['Support'] = df['close'].rolling(window=ROLLING_WINDOW).min()
-    df['SMA'] = ta.trend.sma_indicator(df['close'], window=20)
+    # Example logic: Adjust rolling window based on market volatility
+    volatility = df['close'].rolling(window=10).std().mean()
+
+    if volatility < df['close'].mean() * 0.01:
+        rolling_window = 10  # Lower window for low volatility
+    elif volatility < df['close'].mean() * 0.02:
+        rolling_window = 20  # Medium window for medium volatility
+    else:
+        rolling_window = 30  # Higher window for high volatility
+
+    return rolling_window
+
+
+def calculate_indicators(df, rolling_window):
+    """
+    Calculate technical indicators for the given DataFrame with dynamic parameters.
+    """
+    df['Resistance'] = df['close'].rolling(window=rolling_window).max()
+    df['Support'] = df['close'].rolling(window=rolling_window).min()
+    df['SMA'] = ta.trend.sma_indicator(df['close'], window=rolling_window)
     df['RSI'] = ta.momentum.rsi(df['close'], window=14)
-    df['Bollinger_High'] = ta.volatility.bollinger_hband(df['close'], window=20)
-    df['Bollinger_Low'] = ta.volatility.bollinger_lband(df['close'], window=20)
+    df['Bollinger_High'] = ta.volatility.bollinger_hband(df['close'], window=rolling_window)
+    df['Bollinger_Low'] = ta.volatility.bollinger_lband(df['close'], window=rolling_window)
     df['False_Breakout'] = (df['close'] > df['Resistance'].shift(1)) & (df['close'] < df['Resistance'])
     df['Confirmed'] = (df['close'] > df['SMA']) & (df['RSI'] > 70) & (df['close'] < df['Bollinger_High'])
     return df
@@ -66,7 +83,7 @@ def place_trade(api, symbol, amount, direction, duration):
     """
     Place a trade on IQ Option and check the result.
     """
-    result, trade_id = api.buy(amount, symbol, direction, duration)
+    result, trade_id = api.buy_digital_spot(symbol,amount, direction, duration)
     if result:
         logging.info(f"Trade placed: {direction} {amount} {symbol}")
         check_trade_result(api, trade_id)
@@ -97,7 +114,11 @@ def main():
             data = get_realtime_data(api, SYMBOL, INTERVAL)
             if data:
                 df = pd.DataFrame(data)
-                df = calculate_indicators(df)
+                df['time'] = pd.to_datetime(df['from'], unit='s')
+                df.set_index('time', inplace=True)
+
+                rolling_window = analyze_market_conditions(df)
+                df = calculate_indicators(df, rolling_window)
 
                 if df[df['False_Breakout'] & df['Confirmed']].shape[0] > 0:
                     direction = 'put'  # Assume we detected a false breakout and want to sell
