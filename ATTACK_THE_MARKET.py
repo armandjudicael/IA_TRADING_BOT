@@ -29,11 +29,7 @@ class TradingBot:
             self.strategy = self.config['Trading']['default_strategy']
             self.pair = None
             self.duration = int(self.config['Trading']['duration'])
-            self.smtp_server = self.config['Email']['smtp_server']
-            self.smtp_port = int(self.config['Email']['smtp_port'])
-            self.smtp_user = self.config['Email']['smtp_user']
-            self.smtp_password = self.config['Email']['smtp_password']
-            self.notification_email = self.config['Email']['notification_email']
+
 
             # Determine if running in Docker or Windows
             mode = os.getenv('MODE', 'windows')

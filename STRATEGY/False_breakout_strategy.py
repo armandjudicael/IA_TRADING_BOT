@@ -1,16 +1,14 @@
 import asyncio
-import aiohttp
 import pandas as pd
-import time
 import ta
 import logging
 from iqoptionapi.stable_api import IQ_Option
-from aiohttp import ClientSession
+import pandas_ta as ta
 
 # Constants
 EMAIL = "voahanginirina.noelline@gmail.com"
 PASSWORD = "Noel!ne1969"
-SYMBOL = 'EURUSD-OTC'  # Using the OTC suffix
+SYMBOL = 'NZDUSD-OTC'  # Using the OTC suffix
 INTERVAL = 60
 AMOUNT = 1
 DURATION = 1
@@ -34,6 +32,8 @@ async def connect_to_iq_option(email, password):
     for attempt in range(RECONNECT_ATTEMPTS):
         if api.connect():
             logging.info("Connected to IQ Option")
+            # Start the candle stream
+            api.start_candles_stream(SYMBOL, INTERVAL, 100)
             return api
         else:
             logging.warning(f"Connection attempt {attempt + 1} failed. Retrying...")
@@ -45,41 +45,104 @@ async def connect_to_iq_option(email, password):
 async def get_realtime_data(api, symbol, interval=60):
     """
     Retrieve real-time data from IQ Option.
+
+    Parameters:
+    api : object
+        IQ Option API instance.
+    symbol : str
+        Trading symbol, e.g., 'EURUSD'.
+    interval : int
+        Time interval in seconds for the candles. Default is 60 seconds.
+
+    Returns:
+    dict
+        Real-time candle data.
     """
+    logging.info(f"Starting candle stream for {symbol} with interval {interval} seconds.")
+
     try:
-        data = api.full_realtime_get_candle(symbol,HISTORICAL_PERIOD,500)
+        # Fetch real-time candle data
+        data = api.get_realtime_candles(symbol, interval)
+
+        # Log the number of data points retrieved
+        if data:
+            logging.info(f"Retrieved {len(data)} data points for {symbol}.")
+
+            # Log details of the first few data points (adjust the range as needed)
+            for i, (timestamp, candle) in enumerate(data.items()):
+                logging.info(f"Data point {i + 1}: {candle}")
+                if i >= 4:  # Log only the first 5 data points
+                    break
+        else:
+            logging.info(f"No data retrieved for {symbol}.")
+
         return data
     except Exception as e:
-        logging.error(f"Error fetching data: {e}")
-        return []
+        logging.error(f"Error fetching data for {symbol}: {e}")
+        return {}
 
 
 def analyze_market_conditions(df):
     """
     Analyze market conditions to adjust indicator parameters dynamically.
+
+    Parameters:
+    df : DataFrame
+        DataFrame containing historical market data with columns 'high', 'low', and 'close'.
+
+    Returns:
+    rolling_window : int
+        Rolling window size for indicators based on market conditions.
+    trend : str
+        Identified market trend ("uptrend" or "downtrend").
+    additional_info : dict
+        Dictionary containing values of calculated indicators.
     """
-    # Volatility analysis using ATR
-    df['ATR'] = ta.volatility.average_true_range(df['high'], df['low'], df['close'], window=14)
+    # Ensure the DataFrame has enough data
+    if len(df) < 14:
+        raise ValueError("Insufficient data to analyze market conditions")
+
+    # Calculate ATR (Average True Range)
+    df['ATR'] = ta.atr(high=df['high'], low=df['low'], close=df['close'], length=14)
     avg_atr = df['ATR'].mean()
 
-    # Trend analysis using MACD
-    df['MACD'] = ta.trend.macd(df['close'])
-    df['MACD_signal'] = ta.trend.macd_signal(df['close'])
-    macd_diff = (df['MACD'] - df['MACD_signal']).iloc[-1]
+    # Calculate MACD (Moving Average Convergence Divergence)
+    df['MACD'], df['MACD_signal'], df['MACD_hist'] = ta.macd(df['close'])
+    macd_diff = df['MACD'].iloc[-1] - df['MACD_signal'].iloc[-1]
 
-    if avg_atr < df['close'].mean() * 0.01:
+    # Calculate RSI (Relative Strength Index)
+    df['RSI'] = ta.rsi(df['close'], length=14)
+
+    # Calculate Bollinger Bands
+    df['BB_upper'], df['BB_middle'], df['BB_lower'] = ta.bbands(df['close'], length=20, std=2)
+
+    # Calculate SMA (Simple Moving Average)
+    df['SMA'] = ta.sma(df['close'], length=20)
+
+    # Determine the rolling window size based on average ATR
+    close_mean = df['close'].mean()
+    if avg_atr < close_mean * 0.01:
         rolling_window = 10  # Lower window for low volatility
-    elif avg_atr < df['close'].mean() * 0.02:
+    elif avg_atr < close_mean * 0.02:
         rolling_window = 20  # Medium window for medium volatility
     else:
         rolling_window = 30  # Higher window for high volatility
 
-    if macd_diff > 0:
-        trend = "uptrend"
-    else:
-        trend = "downtrend"
+    # Determine the market trend based on MACD
+    trend = "uptrend" if macd_diff > 0 else "downtrend"
 
-    return rolling_window, trend
+    # Collect additional indicator information
+    additional_info = {
+        'avg_atr': avg_atr,
+        'macd_diff': macd_diff,
+        'rsi': df['RSI'].iloc[-1],
+        'bb_upper': df['BB_upper'].iloc[-1],
+        'bb_middle': df['BB_middle'].iloc[-1],
+        'bb_lower': df['BB_lower'].iloc[-1],
+        'sma': df['SMA'].iloc[-1]
+    }
+
+    return rolling_window, trend, additional_info
 
 
 def calculate_indicators(df, rolling_window, trend):
@@ -112,9 +175,32 @@ async def direction_calculation_task(api):
         while True:
             data = await get_realtime_data(api, SYMBOL, INTERVAL)
             if data:
-                df = pd.DataFrame(data)
-                df['time'] = pd.to_datetime(df['from'], unit='s')
-                df.set_index('time', inplace=True)
+                # Log the raw data to inspect its structure
+                logging.info(f"Raw data: {data}")
+
+                # Convert the retrieved data into a DataFrame
+                try:
+                    df = pd.DataFrame.from_dict(data, orient='index')
+                    logging.info(f"DataFrame columns: {df.columns.tolist()}")
+                    # Adjust DataFrame columns based on available fields
+                    if 'from' in df.columns:
+                        df['time'] = pd.to_datetime(df['from'], unit='s')
+                    if 'open' in df.columns:
+                        df['open'] = df['open'].astype(float)
+                    if 'close' in df.columns:
+                        df['close'] = df['close'].astype(float)
+                    if 'min' in df.columns:
+                        df['low'] = df['min'].astype(float)
+                    if 'max' in df.columns:
+                        df['high'] = df['max'].astype(float)
+
+                    df.set_index('time', inplace=True)
+
+                    # Log DataFrame structure
+                    logging.info(f"DataFrame structure: {df.head()}")
+                except Exception as e:
+                    logging.error(f"Error converting data to DataFrame: {e}")
+                    continue
 
                 rolling_window, trend = analyze_market_conditions(df)
                 df = calculate_indicators(df, rolling_window, trend)
@@ -134,7 +220,7 @@ async def place_trade(api, symbol, amount, direction, duration):
     """
     Place a trade on IQ Option and check the result.
     """
-    result, trade_id = api.buy(amount, symbol, direction, duration)
+    result, trade_id = api.buy_digital_spot(symbol, amount, direction, duration)
     if result:
         logging.info(f"Trade placed: {direction} {amount} {symbol}")
         await check_trade_result(api, trade_id)
